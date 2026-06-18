@@ -8,6 +8,13 @@ Servo myservo;
 int pos = 0;
 
 const int button = 2;
+const int buttoninterval = 50;
+unsigned long previousbutton = 0;
+bool lastbuttonstate = HIGH;
+bool buttonstate = LOW;
+long timeidled = 0;
+
+unsigned long timeidling = 0;
 
 long readings[4] = {0,0,0,0};
 int readIndex;
@@ -19,14 +26,12 @@ const int Trig = 9;
 
 long duration;
 int distance;
-long currentDistance = 0;
 
 bool Objectinside = false;
 unsigned long timeinside;
 bool done = false;
 
 bool syson = true;
-bool lastbuttonstate = HIGH;
 
 bool Ledstate = false;
 unsigned long int previousblink;
@@ -66,8 +71,26 @@ void setup() {
 }
 
 void loop() {
-  if(syson){
     
+    bool currentState = digitalRead(button);
+
+    if(currentState != lastbuttonstate){
+      previousbutton = millis();
+    }
+
+    if((millis() - previousbutton) > buttoninterval){
+      if(currentState != buttonstate){
+        buttonstate = currentState;
+        if(buttonstate == HIGH){
+        syson = !syson;
+        }
+      }
+  }
+
+  lastbuttonstate = currentState;
+
+  if(!syson){
+
     if(millis() - previousServo >= servointerval){
       previousServo = millis();
 
@@ -99,12 +122,13 @@ void loop() {
       digitalWrite(Trig, LOW);
 
       long currentDuration = pulseIn(Echo, HIGH, 15000);
+      long currentDistance = 999;
 
       if(currentDuration > 0){
         currentDistance = (currentDuration * 0.0343) / 2;
       }
 
-      if(abs(currentDistance - previousDistance) < 30 || previousDistance == 999){
+      if(currentDistance != 999 && abs(currentDistance - previousDistance) < 40 || previousDistance == 999){
         readings[readIndex] = currentDistance;
         }
       else{
@@ -131,6 +155,7 @@ void loop() {
       distance = totalDistance / validreadings;
       previousDistance = distance;
       }
+
       else{
       distance = 999;
       previousDistance = 999;
@@ -138,103 +163,36 @@ void loop() {
       }
       Serial.print("Distance: ");
       Serial.println(distance); 
-
-    /*
-
-    analogWrite(LED, value);                 
-
-    value = value + fadeAmount; 
-
-    if (value >= 255 || value <= 0) {
-      fadeAmount = -fadeAmount;              
     }
+    
+    static unsigned long ledtimer = 0;
+    if(millis() - ledtimer > 15){
+      ledtimer = millis();
+      analogWrite(LED, value);
+      value += fadeAmount;
 
-    if (distance <= 150 && !Objectinside) {
-        Objectinside = true;
-        done = false;
-        timeinside = millis();
-    }
-
-    if (Objectinside && !done) {
-
-        if (millis() - timeinside < 10000) {
-
-            if(millis() - previousblink >= blinkinterval){
-              previousblink = millis();
-
-              Ledstate = !Ledstate;
-
-              if(Ledstate){
-                analogWrite(LED, 255);
-              }
-              else{
-                analogWrite(LED, 0);
-              }
-            }
-
-            int freq = map(distance, 0, 150, 2500, 1000);
-            freq = constrain(freq, 1000, 2500);
-            tone(Buzz, freq);
-        }
-        else {
-            done = true;
-            analogWrite(LED, 0);
-            delay(100);
-
-            analogWrite(LED, 255);
-            delay(200);
-
-            analogWrite(LED, 0);
-            delay(200);
-            
-            analogWrite(LED, 250);
-            delay(200);
-
-            analogWrite(LED, 0);
-            delay(200);
-
-            noTone(Buzz);
-        }
-    }
-
-      if (distance > 150 && Objectinside) {
-          Objectinside = false;
-          done = false;
-
-          analogWrite(LED, 0);
-          delay(100);
-
-          analogWrite(LED, 255);
-          delay(200);
-
-          analogWrite(LED, 0);
-          delay(200);
-            
-          analogWrite(LED, 250);
-          delay(200);
-
-          analogWrite(LED, 0);
-          delay(200);
-
-          noTone(Buzz);
+      if(value <= 0 || value >= 255){
+        fadeAmount = -fadeAmount;
       }
+    }
 
-    delay(100);
+    if(distance > 80 || distance == 999){
+      timeidling = millis();
+      timeidled = 0;
+    }
+    if(distance <= 80){
+      timeidled = millis() - timeidling;
+    }
+
+    if(timeidled >= 10000){
+      distance = 999;
+      previousDistance = 999;
+
+      timeidling = millis();
+      timeidled = 0;
+    }
   }
-  bool currentstate = digitalRead(button);
-
-  if (currentstate == LOW && lastbuttonstate == HIGH) {
-      syson = !syson;
-      delay(50);    
+  else{
+      analogWrite(LED, 0);
   }
-
-  lastbuttonstate = currentstate;
-
-  if (!syson) {
-    noTone(Buzz);
-    analogWrite(LED, 0);
-    return;
-    */
-  }
-}
 }
