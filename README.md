@@ -23,7 +23,7 @@ Challenges Faced:
 - Why do we need PWM?
 - How do we interface all these various components together?
 
-Version 1.5(currently work in progress):
+Version 1.5:
 -
 
 The following components are added(along with the afforementioned components already added):
@@ -34,4 +34,30 @@ This version, added the functionality of automatically controlling the Ultrasoni
 
 Working:
 - Same as before except with the added functionality of a moving ultrasonic sensor via the servo motor.
+- The motor will automatically stop when it encounters an obstacle for a timeframe of 10 seconds. 
 
+Challenges Faced:
+- Just trying to properly implement all the different timers properly in order to make sure that nothing interfered with anything
+- understanding what is a debounce window when it comes to buttons and acoustics
+- state machines to an extent and just how complicated things can ge
+
+
+***Photos to be Uploaded***
+
+Version 2.0(Work In Progress):
+- 
+
+The Following Components to be Added:
+- One(1) SG90 Servo Motor
+- One(1) HC-SR04 Ultrasonic Sensor
+- One(1) RGB Led
+
+Working:
+- There are two sensors working in tandem now
+- One servo motor keeps scanning for objects 
+- The Other motor stays idle until the first sensor detects something in which case the sensor activates and then the servo motor will point towards the object in question
+- the sensor will track the object for 10 seconds as accurately as possible due to sensor and motor limitations
+- An RGB LED will also showcase how far the object is in two stages:
+  - Green: Beyond 20cm of the sensor
+  - Yellow: Within 20cm of the sensor
+  - Red: Within 10cm of the sensor
