@@ -14,6 +14,13 @@ bool lastbuttonstate = HIGH;
 bool buttonstate = LOW;
 long timeidled = 0;
 
+int buzzvalue = 0;
+
+unsigned long objectsensed = 0;
+unsigned long blinktime = 0;
+int ledvalue = 0;
+int workdone = 0;
+
 unsigned long timeidling = 0;
 
 long readings[4] = {0,0,0,0};
@@ -25,17 +32,13 @@ const int Echo = 10;
 const int Trig = 9;
 
 long duration;
-int distance;
+int distance = 999;
 
 bool Objectinside = false;
 unsigned long timeinside;
 bool done = false;
 
 bool syson = true;
-
-bool Ledstate = false;
-unsigned long int previousblink;
-const int blinkinterval = 300;
 
 unsigned long int trigtime = 0;
 const unsigned long int sensorinterval = 50;
@@ -89,8 +92,9 @@ void loop() {
 
   lastbuttonstate = currentState;
 
-  if(!syson){
+  if(syson){
 
+    if(workdone == 0){
     if(millis() - previousServo >= servointerval){
       previousServo = millis();
 
@@ -108,6 +112,7 @@ void loop() {
         direction = 1;
       }
     }
+    }
 
     if(millis() - trigtime >= sensorinterval){
       
@@ -121,7 +126,7 @@ void loop() {
 
       digitalWrite(Trig, LOW);
 
-      long currentDuration = pulseIn(Echo, HIGH, 15000);
+      long currentDuration = pulseIn(Echo, HIGH, 10000);
       long currentDistance = 999;
 
       if(currentDuration > 0){
@@ -164,17 +169,6 @@ void loop() {
       Serial.print("Distance: ");
       Serial.println(distance); 
     }
-    
-    static unsigned long ledtimer = 0;
-    if(millis() - ledtimer > 15){
-      ledtimer = millis();
-      analogWrite(LED, value);
-      value += fadeAmount;
-
-      if(value <= 0 || value >= 255){
-        fadeAmount = -fadeAmount;
-      }
-    }
 
     if(distance > 80 || distance == 999){
       timeidling = millis();
@@ -191,8 +185,77 @@ void loop() {
       timeidling = millis();
       timeidled = 0;
     }
+
+    if(distance <= 150){
+      buzzvalue = map(distance, 150, 0, 1500, 4000);  
+      if(workdone == 0){
+        objectsensed = millis();
+        blinktime = millis();
+        workdone = 1;
+      }
+      if(workdone == 1 && millis() - objectsensed < 10000){
+        if(millis() - blinktime >= 300){
+          blinktime = millis();
+          if(ledvalue == 0){
+            ledvalue = 255;
+            tone(Buzz, buzzvalue);
+          }
+          else{
+            ledvalue = 0;
+            tone(Buzz, buzzvalue);
+          }
+          analogWrite(LED, ledvalue);
+          
+        }
+      }
+      else if(workdone == 1){
+        workdone = 2;
+        noTone(Buzz);
+      }
+      if(workdone == 2){
+        static unsigned long ledtimer = 0;
+        if(millis() - ledtimer >= 15){
+          ledtimer = millis();
+          analogWrite(LED, value);
+          value += fadeAmount;
+          if(value <= 0 || value >= 255){
+            fadeAmount = -fadeAmount;
+          }
+        }
+      }
+    }
+    else{
+      noTone(Buzz);
+
+      static bool exitTimerStarted = false;
+
+      if(workdone != 0 && !exitTimerStarted){
+        blinktime = millis();
+        exitTimerStarted = true;
+        analogWrite(LED, 0);
+      }
+
+      if(exitTimerStarted && (millis() - blinktime >= 200)){
+        workdone = 0;             
+        exitTimerStarted = false; 
+      }
+
+      if(workdone == 0){
+        static unsigned long ledtimer = 0;
+        if(millis() - ledtimer >= 15){
+          ledtimer = millis();
+          analogWrite(LED, value);
+          value += fadeAmount;
+          if(value <= 0 || value >= 255){
+            fadeAmount = -fadeAmount;
+          }
+        }
+      }
+    }
   }
   else{
-      analogWrite(LED, 0);
+    analogWrite(LED, 0);
+    workdone = 0;
+    noTone(Buzz);
   }
 }
