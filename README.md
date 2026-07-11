@@ -7,19 +7,19 @@ Version's List
 - [Version 1.5(The First Fully Working Product)](version-15)
 - [Version 2.0(Currently Work in Progress)](#version-20)
  
-**Version 1.0**
+**1.0**
 - Hardware Used
 - Software Used
 - Working
 - Challenges Faced
 
-**Version 1.5**
+**1.5**
 - Hardware Used
 - Software Used
 - Working
 - Challenges Faced
 
-**Version 2.0**
+**2.0**
 - Hardware Used
 - Software Used
 - Working
