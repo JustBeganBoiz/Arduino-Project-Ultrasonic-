@@ -2,24 +2,12 @@
 This is an Arduino based project which uses the Arduino UNO R4 Minima as the microcontroller head along with ultrasonic sensors, motors and displays in order to work as a coherent radar system.
 
 ## Table Of Contents:
-Version's List
+**Version's List:**
 - [Version 1.0(The First Prototype)](#version-10)
-- [Version 1.5(The First Fully Working Product)](version-15)
+- [Version 1.5(The First Fully Working Product)](#version-15)
 - [Version 2.0(Currently Work in Progress)](#version-20)
  
-**1.0**
-- Hardware Used
-- Software Used
-- Working
-- Challenges Faced
-
-**1.5**
-- Hardware Used
-- Software Used
-- Working
-- Challenges Faced
-
-**2.0**
+**Within Each Version:**
 - Hardware Used
 - Software Used
 - Working
