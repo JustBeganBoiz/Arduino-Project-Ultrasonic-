@@ -7,7 +7,6 @@ int fadeAmount = 5;
 
 //initialising the object myservo
 Servo myservo;
-int pos = 0;
 
 //defining the rest of the constants and pin no's
 const int RED = A0;
@@ -39,17 +38,12 @@ const int Trig = 4;
 long duration;
 int distance = 999;
 
-bool Objectinside = false;
-unsigned long timeinside;
-bool done = false;
-
 bool syson = true;
 
 unsigned long int trigtime = 0;
 const unsigned long int sensorinterval = 50;
 
 int previousDistance = 0;
-unsigned long int measureinterval = 10;
 
 int angle = 0;
 int direction = 1;
