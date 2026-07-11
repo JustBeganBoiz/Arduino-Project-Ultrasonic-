@@ -246,7 +246,7 @@ void loop() {
         }
         digitalWrite(RED, LOW);
         digitalWrite(BLUE, LOW);
-        digitalWrite(GREEN, HIGH);
+        digitalWrite(GREEN, LOW);
       }
     }
     else{
@@ -285,5 +285,8 @@ void loop() {
     analogWrite(LED, 0);
     state = 0;
     noTone(Buzz);
+    digitalWrite(RED, LOW);
+    digitalWrite(BLUE, LOW);
+    digitalWrite(GREEN, LOW);
   }
 }
