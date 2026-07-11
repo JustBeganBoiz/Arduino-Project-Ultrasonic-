@@ -1,6 +1,8 @@
 # Arduino-Ultrasonic-Radar  
 This is an Arduino based project which uses the Arduino UNO R4 Minima as the microcontroller head along with ultrasonic sensors, motors and displays in order to work as a coherent radar system.
 
+**NOTE: Circuit diagrams were simulated in Tinkercad using an Uno R3 footprint, as Tinkercad does not currently support the R4 Minima — pin layout and behavior are equivalent for this project**
+
 ## Table Of Contents:
 **Version's List:**
 - [Version 1.0(The First Prototype)](#version-10)
