@@ -140,6 +140,8 @@ Challenges Faced:
 * Understanding the key difference between procedural programming and modular programming using finite state machines (FSM's) as well as using function based programming
 * Interlacing of all the various different functions and making sure the entire code block doesn't devolve into unknown states and is clearly defined with objectives and goals outlined
 
+**NOTE: NO photos or videos were shot for this version nor were any changes to the circuit done hence only the code and the README is being modified**
+
 ## Version 2.1 
 
 Currently being tested and worked upon
