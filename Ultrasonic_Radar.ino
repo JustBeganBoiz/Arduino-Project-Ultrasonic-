@@ -1,72 +1,87 @@
-#include <Servo.h> //calling upon the servo library 
+#include <Servo.h>
 
-// defining the pin no's and constants
-const int LED = 3;
-int value = 0;
-int fadeAmount = 5;  
-
-//initialising the object myservo
-Servo myservo;
-
-//defining the rest of the constants and pin no's
-const int RED = A0;
+const int LED = 3; // defining the LED Pin no's as well as the amount of glow 
+const int Buzz = 6; //defining the pin no's for the buzzer, echo and trigger pin for the ultrasonic sensor
+const int Trig = 4;
+const int Echo = 7;
+const int Button = 2; // defining the Pin no. for the button and 
+const int RED = A0; //defining the pins for the RGB LED
 const int GREEN = A1;
 const int BLUE = A2;
 
-const int button = 2;
+int value = 0; // to control the glow amount
+int fade = 5; // to control the amount by which the glow increases or decreases 
+
+//defining the servo object 
+Servo myservo;
+
+// defining the debounce window for the button
+unsigned long Buttonpressed = 0; //how long the button has been pressed for
 const int buttoninterval = 50;
-unsigned long previousbutton = 0;
-bool lastbuttonstate = HIGH;
-bool buttonstate = LOW;
+bool lastbuttonstate = true;
+bool buttonState = false; //the default state of the system is ON 
 
-int buzzvalue = 0;
+int buzzvalue = 0; //used for defining the frequency at which the buzzer buzzes at
 
-unsigned long objectsensed = 0;
-unsigned long blinktime = 0;
-int ledvalue = 0;
-int state = 0;
+unsigned long Objectsensed = 0; //to keep track of how long the object has been in sensing range
+unsigned long ledtimelapsed = 0; //to keep track of the blinking of the LED
 
-//creating an array to use moving average method for maximum accuracy
-long readings[4] = {0,0,0,0};
-int readIndex;
+const byte Read_Num = 5; // the size of the array
+long readings[Read_Num] = {999,999,999,999,999}; //creation of an array in order to store the data values
+byte readIndex = 0; //to keep track of the position of the array
 
-const int Buzz = 6;
+long duration = 0;  //duration of the ultrasonic sensor signals
+int distance = 999; //initial default state
+int previousdistance = 0; //keeping a track of the previous distances
 
-const int Echo = 7;
-const int Trig = 4;
+unsigned long int trigtime = 0; //keeping track of the sensor triggers 
+const unsigned long int Scanninginterval = 65; // interval for the ultrasonic sensor
 
-long duration;
-int distance = 999;
+int angle = 0; // angle for servo
+int direction = 1; //controlling the direction of the servo 
+const int Servointerval = 15; 
+unsigned long previousServo = 0; //keeping track of how long it has been since last servo movement
 
-bool syson = true;
+static unsigned long transtimer = 0; //timer to keep track of how long it has been since 10 seconds have passed
+static unsigned long ledtimer = 0; // timer to keep track of the blinking of the LED post state change
+static bool transitionStarted = false; // state change operator
+const int transInterval = 1200; // time to transition from SCANNING to SENSING
+const int ledInterval = 200; //time between blinks
 
-unsigned long int trigtime = 0;
-const unsigned long int sensorinterval = 50;
+bool CurrentButton; //to keep track of the current state of the button
 
-int previousDistance = 0;
+enum SystemState {
+  SCANNING,
+  SENSING,
+  TRANSITION
+};
 
-int angle = 0;
-int direction = 1;
-unsigned long previousServo = 0;
-const int servointerval = 15;
+enum Power {
+  TURN_ON = true,
+  TURN_OFF = false
+};
+
+Power Control = TURN_ON;
+SystemState CurrentState = SCANNING;
+
 
 void setup() {
+  pinMode(LED, OUTPUT);
 
-  //estabilishing the pins
-  myservo.attach(11);
+  pinMode(Trig, OUTPUT);
+  pinMode(Echo, INPUT);
+
+  pinMode(Buzz, OUTPUT);
+
+  pinMode(Button, INPUT_PULLUP);
 
   pinMode(RED, OUTPUT);
-  pinMode(BLUE, OUTPUT);
   pinMode(GREEN, OUTPUT);
+  pinMode(BLUE, OUTPUT);
 
-  pinMode(button, INPUT_PULLUP);
-  pinMode(LED, OUTPUT);
-  pinMode(Echo, INPUT);
-  pinMode(Trig, OUTPUT);
-  pinMode(Buzz, OUTPUT);
-   
-  //starting animation 
-  analogWrite(LED, 0);
+  myservo.attach(9);
+
+  analogWrite(LED, 0); //blinking action of the blue LED on startup
   delay(100);
 
   analogWrite(LED, 255);
@@ -79,214 +94,276 @@ void setup() {
 }
 
 void loop() {
+
+  ButtonReader(); //reads the state of the Button 
+
+  switch(Control){
+    case(TURN_ON):
+      DistanceRead(); //Distance Reading of the Sensor
+      StateSwitcher(); //to change the states when the distances are changed
+      switch(CurrentState){
+        case(SCANNING):
+          LED_Fade(); //Fade function for the LED's
+          ServoSwerve(); //Movement of the Servo
+          Clearing(); //to keep only the Sensors and the servo turned ON
+          break;
+
+        case(SENSING):
+          AlertTone(); // Controlling the buzzing of the buzzer
+          LED_Blink(); // Controls the Blinking of the LED's
+          DangerSense(); //Controls the Buzzing of the Buzzer
+          break;
+        
+        case(TRANSITION):
+          Clearing();
+          break;
+      }
+      break;
     
-    //reading the button
-    bool currentState = digitalRead(button);
+    case(TURN_OFF):
+      ShutDown(); //turning everything OFF
+      break;
+  }
+}
+
+void Clearing(){
+  noTone(Buzz); //Keeping the buzzer  and the RGB LED's OFF while scanning
+  digitalWrite(RED, LOW);
+  digitalWrite(GREEN, LOW);
+  digitalWrite(BLUE, LOW);
+}
+
+void ServoSwerve(){
+
+  if((millis() - previousServo) >= Servointerval){ //servo scans for 0° - 160° in 15ms interval between each angle interval
+  previousServo = millis();
+
+  myservo.write(angle);
+
+  angle += direction;
+  
+  if(angle <= 0){
+    angle = 0;
+    direction = 1;
+  }
+  if(angle >= 160){
+    angle = 160;
+    direction = -1;
+  }
+  }
+}
+
+void LED_Blink(){
+  if(millis() - ledtimelapsed >= 500){ // every half a second it blinks
+    ledtimelapsed = millis(); //start the countdown
+    value = (value == 0) ? 255 : 0;
+    analogWrite(LED, value);
+  }
+}
+
+void LED_Fade(){
+  static unsigned long fadeTimer = 0;
+  if(millis() - fadeTimer >= 30){
+    fadeTimer = millis();
+    value = constrain(value + fade, 0, 255);
+    if(value <= 0){
+      fade = 5;
+    }
+    else if(value >= 255){
+      fade = -5;
+    }
+    analogWrite(LED, value);
+  }
+}
+
+void AlertTone(){
+  static unsigned long toneTimer = 0;
+  if(millis() - toneTimer >= 100){
+    toneTimer = millis();
+    buzzvalue = map(distance, 50, 0, 4500, 1500); //the buzzer buzzes from a distance of 50cm to 0cm with a variable frquency from 4500 to 1500hz
+    if(distance < 50){
+        tone(Buzz, buzzvalue);
+    }
+  }
+}
+
+void DistanceRead(){
+
+  if(millis() - trigtime >= Scanninginterval){ //gives the sensor a total interval of 50 milliseconds (non blocking)
+
+    trigtime = millis(); //starts the countdown of the sensor
+
+    digitalWrite(Trig, LOW);
+    delayMicroseconds(2);
+
+    digitalWrite(Trig, HIGH);
+    delayMicroseconds(10);
+
+    digitalWrite(Trig, LOW); //sends out a ultrasonic pulse
     
-    //checking if the button was pressed or not
-    if(currentState != lastbuttonstate){
-      previousbutton = millis();
+    unsigned long CurrentDuration = pulseIn(Echo, HIGH, 15000); /*timeout of the reading if 
+    more than 15000 microseconds have passed */ 
+    
+    long CurrentDistance = 999; // default
+
+    if(CurrentDuration > 0){
+      CurrentDistance = (0.0343 * CurrentDuration) / 2; // distance formula
     }
 
-    //providing a small debounce window of 50ms to prevent floating inputs
-    if((millis() - previousbutton) > buttoninterval){
-      if(currentState != buttonstate){
-        buttonstate = currentState;
-        if(buttonstate == HIGH){
-        syson = !syson;
-        }
+    readings[readIndex] = CurrentDistance; // putting the readings into the array
+    readIndex++; //incrementation
+
+    if(readIndex >= Read_Num){
+      readIndex = 0; // resetting the position of adder
+    }
+    
+    long sorted[Read_Num]; //sorted array definition
+
+    int validreadings = 0; // internal variable to keep track of the median filter 
+    for(int i=0; i<Read_Num; i++){
+      if(readings[i] != 999){
+        sorted[validreadings] = readings[i];
+        validreadings++; //copying the normal readings into an unsorted array
       }
+    }
+
+    if(validreadings == 0){
+      distance = 999; //edge case
+    }
+
+    else{ 
+      for(int i = 1; i < validreadings; i++){ //insertion sorting
+        long key = sorted[i];
+        int j = i - 1;
+        while(j >= 0 && sorted[j] > key){
+          sorted[j+1] = sorted[j];
+          j--;
+        }
+        sorted[j+1] = key;
+      }
+      if(validreadings % 2 == 1){
+        distance = sorted[validreadings/2]; //median filtering by finding which is the median
+      }
+      else{
+        distance = ((sorted[(validreadings/2) - 1]) + (sorted[validreadings/2])) / 2;
+      }
+    }
+    Serial.print("Distance: ");
+    Serial.println(distance); //printing of the distance values
+  } 
+}
+
+void ShutDown(){
+  noTone(Buzz); //turning OFF all the components on the board
+  digitalWrite(RED, LOW);
+  digitalWrite(GREEN, LOW);
+  digitalWrite(BLUE, LOW);
+  digitalWrite(LED, LOW);
+  distance = 999;
+  previousdistance = 999;
+  CurrentState = SCANNING; // to reset the whole system
+}
+
+void ButtonReader(){
+  CurrentButton = digitalRead(Button); //to read the current state of the button
+
+  if(CurrentButton != lastbuttonstate){
+    Buttonpressed = millis(); // if there's a change in the button it starts counting
   }
 
-  //if the button had been pressed then only will our system turn off otherwise it by default stays on
-  lastbuttonstate = currentState;
-  
-  if(syson){
-
-    /*This program has three defined states which are as follows:
-    - state 0 which is the idling state and also the scanning mode
-    - state 1 in which the sensor is in sensing mode
-    - state 2 which is a state that gets triggered briefly if an object stays even after 10 seconds*/
-    if(state == 0 || state == 2){
-    if(millis() - previousServo >= servointerval){
-      previousServo = millis();
-
-      myservo.write(angle);
-
-      // servo movement code
-      angle += direction;
-
-      if(angle >= 160){
-        angle = 160;
-        direction = -1;
-      }
-      
-      if(angle <= 0){
-        angle = 0;
-        direction = 1;
+  if((millis() - Buttonpressed) >= 50){ //a small debounce window
+    if(CurrentButton != buttonState){
+      buttonState = CurrentButton; 
+      if(buttonState == LOW){
+        if(Control == TURN_ON){
+          Control = TURN_OFF;
+        } 
+        else {
+          Control = TURN_ON;
+        }//changes the state of the system if the button is pressed down
       }
     }
+  }
+  lastbuttonstate = CurrentButton; //switches the past state to currentstate
+}
+
+void DangerSense(){
+  //this function allows us to use the LED's to show how far the object is from the sensor
+  if(distance <= 50 && distance > 30){
+    digitalWrite(RED, LOW);
+    digitalWrite(GREEN, HIGH);
+    digitalWrite(BLUE, LOW);
+  }
+  if(distance <= 30 && distance > 15){
+    digitalWrite(RED, HIGH);
+    digitalWrite(GREEN, HIGH);
+    digitalWrite(BLUE, LOW);
+  }
+  if(distance < 15){
+    digitalWrite(RED, HIGH);
+    digitalWrite(GREEN, LOW);
+    digitalWrite(BLUE, LOW);
+  }
+}
+
+void StateSwitcher(){
+  if(distance <= 50){
+    if(Objectsensed == 0){
+      Objectsensed = millis();
+    }
+    if((millis() - Objectsensed) < 10000 && !transitionStarted){
+      CurrentState = SENSING;
     }
 
-    if(millis() - trigtime >= sensorinterval){
-      
-      //ultrasonic sensor code
-      trigtime = millis();
+    else{
+      CurrentState = TRANSITION; // initiates state change if even after 10 seconds it's in range
 
-      digitalWrite(Trig, LOW);
-      delayMicroseconds(2);
-
-      digitalWrite(Trig, HIGH);
-      delayMicroseconds(10);
-
-      digitalWrite(Trig, LOW);
-
-      
-      long currentDuration = pulseIn(Echo, HIGH, 10000); //timeout of 10000 microseconds to prevent false readings as well as to give it a fixed distance of around 150cm
-      long currentDistance = 999;
-
-      if(currentDuration > 0){
-        currentDistance = (currentDuration * 0.0343) / 2; // distance = speed * time formula
-      }
-      if(currentDistance != 999 && (previousDistance == 999 || abs(currentDistance - previousDistance) < 40)){
-        readings[readIndex] = currentDistance; //moving average previously discussed. this throws away the garbage values 
-        }
-      else{
-        readings[readIndex] = -1;
+      if(!transitionStarted){
+        transtimer = millis();
+        ledtimer = millis();
+        transitionStarted = true;
       }
 
-      readIndex++;
-
-      if(readIndex >= 4){ //filter code 
-
-        readIndex = 0;
-
-        int validreadings = 0;
-        long totalDistance = 0;
-
-        for(int i=0; i<4; i++){
-          if(readings[i] != -1){
-            totalDistance += readings[i]; 
-            validreadings++;
-          }
-        }
-
-      if(validreadings > 0){
-      distance = totalDistance / validreadings; //averaging function 
-      previousDistance = distance;
-      }
-
-      else{
-      distance = 999;
-      previousDistance = 999; //defaulting scenario in case the sensor times out
-      }
-      }
-      Serial.print("Distance: ");
-      Serial.println(distance); 
-    }
-
-    if(distance <= 50){ //sensor sensing mode gets triggered under 50cm
-      buzzvalue = map(distance, 50, 0, 1500, 4000);  //the buzzer has been mapped from 1500hz to 4000hz
-
-      /*the RGB LED has three modes when the object is under 50cm
-      GREEN if its from 50cm to 30cm
-      YELLOW if its from 30cm to 15cm
-      RED if its less than 15cm*/
-      if(state == 0){
-        objectsensed = millis();
-        blinktime = millis();
-        digitalWrite(RED, LOW);
-        digitalWrite(BLUE, LOW);
-        digitalWrite(GREEN, LOW); 
-        state = 1;
-      }
-      if(state == 1 && millis() - objectsensed < 10000){
-        if(millis() - blinktime >= 300){
-          blinktime = millis();
-          if(distance <= 50 && distance > 30){
-            digitalWrite(RED, LOW);
-            digitalWrite(BLUE, LOW);
-            digitalWrite(GREEN, HIGH);
-          }
-          if(distance <= 30 && distance > 15){
-            digitalWrite(RED, HIGH);
-            digitalWrite(BLUE, LOW);
-            digitalWrite(GREEN, HIGH);
-          }
-          if(distance <= 15){
-            digitalWrite(RED, HIGH);
-            digitalWrite(BLUE, LOW);
-            digitalWrite(GREEN, LOW);
-          }
-          if(ledvalue == 0){
-            ledvalue = 255;
-            tone(Buzz, buzzvalue); //buzzer buzzing code
-          }
-          else{
-            ledvalue = 0;
-            tone(Buzz, buzzvalue);
-          }
-          analogWrite(LED, ledvalue);
-          
-        }
-      }
-      else if(state == 1){ //in the instance that the object stays within 50 cm post 10 seconds 
-        state = 2;
-        noTone(Buzz);
-      }
-      if(state == 2){
-        static unsigned long ledtimer = 0;
-        if(millis() - ledtimer >= 15){
+      if(millis() - transtimer < transInterval){
+        if(millis() - ledtimer >= ledInterval){
           ledtimer = millis();
-          analogWrite(LED, value);
-          value += fadeAmount;
-          if(value <= 0 || value >= 255){
-            fadeAmount = -fadeAmount;
-          }
+          value = (value == 0) ? 255 : 0; //every 2/10th a second LED blinks (totally twice)
+          analogWrite(LED,value);
         }
-        digitalWrite(RED, LOW);
-        digitalWrite(BLUE, LOW);
-        digitalWrite(GREEN, LOW);
+      }
+
+      else{
+        CurrentState = SCANNING; //last switch
+      }
+    }
+  }
+
+  else if(distance > 50 && Objectsensed > 0){ //if object leaves before 10 seconds
+    CurrentState = TRANSITION;
+
+    if(!transitionStarted){
+      transitionStarted = true;
+      ledtimer = millis();
+      transtimer = millis();
+    }
+
+    if((millis() - transtimer < transInterval)){
+      if(millis() - ledtimer >= ledInterval){
+        ledtimer = millis();
+        value = (value == 0) ? 255 : 0;
+        analogWrite(LED, value);
       }
     }
     else{
-      noTone(Buzz); //once the object exits the space before 10 seconds 
-
-      static bool exitTimerStarted = false;
-
-      if(state != 0 && !exitTimerStarted){
-        blinktime = millis();
-        exitTimerStarted = true;
-        analogWrite(LED, 0);
-      }
-
-      if(exitTimerStarted && (millis() - blinktime >= 200)){
-        state = 0;             
-        exitTimerStarted = false; 
-      }
-
-      if(state == 0){
-        static unsigned long ledtimer = 0;
-        if(millis() - ledtimer >= 15){
-          ledtimer = millis();
-          analogWrite(LED, value);
-          value += fadeAmount;
-          if(value <= 0 || value >= 255){
-            fadeAmount = -fadeAmount;
-          }
-        } // the blue led blinks to signal the state change 
-        digitalWrite(RED, LOW);
-        digitalWrite(BLUE, LOW);
-        digitalWrite(GREEN, LOW);
-      }
+      Objectsensed = 0;
+      transitionStarted = false;
+      CurrentState = SCANNING; //clearing all the flags
     }
   }
-  else{ //default case if everything fails
-    analogWrite(LED, 0);
-    state = 0;
-    noTone(Buzz);
-    digitalWrite(RED, LOW);
-    digitalWrite(BLUE, LOW);
-    digitalWrite(GREEN, LOW);
+
+  else{
+    Objectsensed = 0;
+    transitionStarted = false;
+    CurrentState = SCANNING;
   }
 }
