@@ -8,10 +8,14 @@ This is an Arduino-based project that uses the Arduino UNO R4 Minima as the prim
 
 **Version List:**
 
-* [Version 1.0 (The First Prototype)](#version-10)
-* [Version 1.5 (The First Fully Working Product)](#version-15)
-* [Version 2.0 (Currently a Work in Progress)](#version-20)
-
+* [Version 1.0 (The Prototype)](#version-10)
+  * [What's New?](#whats-new-in-version-10)
+* [Version 1.5 (The First Fully Working System)](#version-15)
+  * [What's New?](#whats-new-in-version-15)
+* [Version 2.0 (A Key Jump)](#version-20)
+  * [What's New?](#whats-new-in-version-20)
+* [Version 2.1 (Dual Sensor Mode)](#version-21)
+  
 **Within Each Version:**
 
 * Hardware Used
@@ -19,7 +23,18 @@ This is an Arduino-based project that uses the Arduino UNO R4 Minima as the prim
 * Working
 * Challenges Faced
 
+**Now adding a whole new addition and that is the [Improvements Made In Every Version] as compared to the previous version.**
+
 ## Version 1.0
+
+### Whats New In Version 1.0
+- Nothing, this is the beginning of the project and is, frankly speaking, a prototype for the much more polished future versions with all the added features however in this version ther already was a base for:
+- The Microcontroller(in this case the Arduino UNO R4 Minima) of course which handles all the processing and timer logic
+- This version of the project is using delay() based timers and will be upgraded using millis() based non-blocking timers in later versions
+- It includes the functionality of turning on the system using a button
+- A buzzer to buzz depending on the distance from the object
+- An ultrasnic sensor which is used to sense the distance from the object and works on simple distance formula measurements
+- A Blue LED which is used to showcase the primitive states which is SCANNING and NON_SCANNING
 
 Hardware Used:
 
@@ -53,6 +68,12 @@ Challenges Faced:
 * Implementing a basic state machine to control the LED behaviour.
 
 ## Version 1.5
+
+### Whats New In Version 1.5
+- A fully working state machine
+- A servo motor in order to control the direction of the Sensor
+- An RGB LED to alert the user of the various distances the object is from the sensor(RED, YELLOW, GREEN)
+- An improved moving average based distance measurement instead of a standard direct measurement using distance formula
 
 Hardware Used:
 
@@ -89,4 +110,38 @@ Challenges Faced:
 
 ## Version 2.0
 
-Work in Progress
+### Whats New In Version 2.0
+- An upgraded and clearly defined finite state machine(SFM) with clearly defined states(SCANNING, SENSING, TRANSITION)
+- A  further upgraded median filter which improves upon the moving average filter with faster, more robust readings as well as reducing the calculation overhead which was previously required
+- DRASTICALLY improved the overall readability of the code
+- VASTLY reduced the overall "jank" or dead code which was existing in the previous code with well placed and well named constants
+- Improved the upgradeability of the project by SEVERAL folds by switching to a modular programming based approach
+- Fixed the bugs which were present in the previous versions namely, the improper state switching and the irregular reading of the sensor
+
+Hardware Used:
+
+* One (1) Arduino UNO R4 Minima
+* One (1) Blue LED
+* One (1) Button
+* One (1) Passive Buzzer
+* One (1) HC-SR04 Ultrasonic Sensor
+* One (1) SG90 Servo Motor with a servo horn
+* Cardboard
+* One (1) RGB LED
+
+Software Used:
+
+* Arduino IDE
+
+Working:
+* The Working of the system is the same as the previous version but the significant difference comes in the extensive commenting and the use of clearly defined states as well as building upon the functional and switch case logic wherever possible
+
+Challenges Faced:
+* Understanding the key difference between procedural programming and modular programming using finite state machines (FSM's) as well as using function based programming
+* Interlacing of all the various different functions and making sure the entire code block doesn't devolve into unknown states and is clearly defined with objectives and goals outlined
+
+**NOTE: NO photos or videos were shot for this version nor were any changes to the circuit done hence only the code and the README is being modified**
+
+## Version 2.1 
+
+Currently being tested and worked upon
