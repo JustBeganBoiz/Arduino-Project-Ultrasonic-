@@ -14,8 +14,10 @@ This is an Arduino-based project that uses the Arduino UNO R4 Minima as the prim
   * [What's New?](#whats-new-in-version-15)
 * [Version 2.0 (A Key Jump)](#version-20)
   * [What's New?](#whats-new-in-version-20)
-* [Version 2.1 (Dual Sensor Mode)](#version-21)
-  
+* [Version 2.1 (Minor Upgrade)](#version-21)
+  * [What's New?](#whats-new-in-version-21)
+* [Version 2.2](#version-22)
+ 
 **Within Each Version:**
 
 * Hardware Used
@@ -144,4 +146,50 @@ Challenges Faced:
 
 ## Version 2.1 
 
-Currently being tested and worked upon
+Hardware Used:
+
+* One (1) Arduino UNO R4 Minima
+* One (1) Blue LED
+* One (1) Button
+* One (1) Passive Buzzer
+* One (1) HC-SR04 Ultrasonic Sensor
+* One (1) SG90 Servo Motor with a servo horn
+* Cardboard
+* One (1) RGB LED
+
+Software Used:
+
+* Arduino IDE
+
+Working:
+- The System works on the same basic principle that the previous version had except now additional functionality has been added or, to be precise, allocation for the functionality has been added onto the system.
+- **ALL** the functions that the previous version did is now within the "BASIC" mode of the system and that mode has been successfully declared as *functionally* complete
+- When you turn the system ON, the blue LED blinks twice (quicker than before) and then the RGB led will blink a PURPLE color 4 times
+- The system starts with the power being turned OFF and must be turned on via a button
+- After the button gets pressed, the RGB flashes WHITE once followed by running the system in BASIC mode (all the functionalities of Version 2.0).
+- The button pressing and the white light flashing is now fixed regardless of how many times you reset
+- When you reset via a single short press it puts the Servo motor(and by extension the Sensor) at the zero position.
+- When you hold the button(whilst the control is ON) for 4 seconds, the mode will be switched to ADVANCED(feature set to be developed)
+- Similarly you can switch back to BASIC mode
+- Whilst the BASIC mode is running, during the SCANNING cycle the buzzer will buzz at set intervals similar to a radar
+
+Challenges Faced:
+- Further improving the use of non-blocking timers and State Machines especially since the program has evolved into a complicated 600+ lines program with several states WITHIN states.
+- How exactly do we divide this GINORMOUS program properly so that it can be developed as efficiently as possible while not needlessly dividing the program
+- What's the usage of "ifndef", "define" and "exitif" and the overall usage of .h files in order to store the global variables.
+- How to stop one self from needlessly adding features when it's not needed
+- How exactly does one maintain a huge program such as this when 600+ lines without running into roadblocks constantly
+- When to omit a feature when the implementation of that particular feature would hinder the overall development siginificantly
+
+## Whats New In Version 2.1
+- The headline feature is the creation of two seperate MODES within the system called as BASIC and ADVANCED
+- The new sonar-based pinging system using the Buzzer during the SCANNING cycle
+- The new WHITE color blinking from the RGB LED to indicate the power shifting from OFF to ON
+- Two different glow's of the LED when the modes get switched. The two different glow's being PURPLE and a multi-color glow
+- Division of the program into several different files in order to implement proper segmentation and reduce clutter in the main program and improve developmental efficiency
+
+***NOTE: Photos and Videos of this version will be uploaded as soon as possible***
+
+## Version 2.2
+
+Work in progress
