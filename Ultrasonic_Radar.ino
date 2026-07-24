@@ -2,7 +2,7 @@
 
 Modes Shifter = BASIC;                   //this controls the Shifting of the States
 Power Control = TURN_OFF;                //this controls the Power Supply (default: POWERED OFF)
-SystemState CurrentState = SCANNING;     // this controls the States
+Basic_States CurrentState = SCANNING;     // this controls the States
 Modes lastShifterState = BASIC;          // keeping track of states
 FlashColour currentFlashColor = PURPLE;  // the glow for the RGB when state changes occur
 
@@ -22,7 +22,8 @@ void setup() {
   pinMode(GREEN, OUTPUT);
   pinMode(BLUE, OUTPUT);
 
-  myservo.attach(3);
+  myservo1.attach(3);
+  myservo2.attach(A0);
 
   analogWrite(LED, 0);  //blinking action of the blue LED on startup
   delay(150);
@@ -82,7 +83,9 @@ void loop() {
   }
 
   DistanceRead(); // Reads the distance and displays it on the serial monitor
-  StateSwitcher(); //used to switch the States from BASIC to ADVANCED
+  if(Shifter == BASIC){
+    StateSwitcherBasic(); //used to switch the States from BASIC to ADVANCED
+  }
 
   switch (Shifter) {
     case BASIC:
@@ -110,29 +113,31 @@ void loop() {
       }
 
       break;
-    case ADVANCED:
-      myservo.write(0); //yet to be developed fully
+    case ADVANCED: 
+      Dual_ServoSwerve();
+      Turn_Off_RGB();
+      analogWrite(LED,0);
       break;
   }
 }
 
 void ServoSwerve() {
 
-  if ((millis() - previousServo) >= Servointerval) {  //servo scans for 0° - 160° in 15ms interval between each angle interval
-    previousServo = millis();
+  if ((millis() - servoTimer) >= servoInterval) {  //servo scans for 0° - 160° in 15ms interval between each angle interval
+    servoTimer = millis();
 
-    myservo.write(angle); //to move the servo
+    myservo1.write(angle[0]); //to move the servo
 
-    angle += direction; // to increment the angle
+    angle[0] += direction[0]; // to increment the angle
 
-    if (angle <= 0) { // constrains the servo to a fixed angle of 0° - 160°
-      angle = 0;
-      direction = 1;
+    if (angle[0] <= 0) { // constrains the servo to a fixed angle of 0° - 160°
+      angle[0] = 0;
+      direction[0] = 1;
     }
 
-    if (angle >= 160) {
-      angle = 160;
-      direction = -1;
+    if (angle[0] >= 160) {
+      angle[0] = 160;
+      direction[0] = -1;
     }
   }
 }
@@ -213,7 +218,7 @@ void DistanceRead() {
   }
 }
 
-void StateSwitcher() {
+void StateSwitcherBasic() {
   if (bufferStarted) {
     CurrentState = BUFFER;
     if (millis() - bufferTimer >= bufferInterval) { //a buffer window for a duration of 2 seconds in which SENSING can't be triggered at all

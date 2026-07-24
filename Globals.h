@@ -12,6 +12,7 @@ const int GREEN = 11;
 const int BLUE = 10;
 
 bool isReset = false;  //to keep track of resets(short button presses of less than 4s)
+bool servoReset = false;
 
 const int bufferInterval = 2000;  //This is the amount of time after Sensing has been initiated for which the SCANNING mode will NOT be disengaged
 unsigned long bufferTimer = 0;    // to keep track of the buffer timer
@@ -23,7 +24,8 @@ int fade = 5;   // to control the amount by which the glow increases or decrease
 bool isWakingUp = false;  //to keep track of the system as it Resets
 bool Started = false;     //When the system has just been turned ON
 
-Servo myservo;  //defining the servo object
+Servo myservo1;  //defining the servo object
+Servo myservo2;
 
 unsigned long buttonPressed = 0;  //how long the button has been pressed for
 const int buttonInterval = 50;    // debounce window
@@ -69,10 +71,15 @@ const int pingBounce = 100; //how long each ping lasts
 unsigned long int trigtime = 0;                 //keeping track of the sensor triggers
 const unsigned long int Scanninginterval = 65;  // interval for the ultrasonic sensor
 
-int angle = 0;      // angle for servo
-int direction = 1;  //controlling the direction of the servo
-const int Servointerval = 15;
-unsigned long previousServo = 0;  //keeping track of how long it has been since last servo movement
+float angle[2] = {0,160};      // angle for servo
+float direction[2] = {1,-1};  //controlling the direction of the servo
+const int servoInterval = 15;
+unsigned long servoTimer = 0;  //keeping track of how long it has been since last servo movement
+const int quickInterval = 6400;
+unsigned long quickTimer = 0;
+const byte maxAngle = 160;
+const byte minAngle = 0;
+bool quickScanDone;
 
 static unsigned long transtimer = 0;    //timer to keep track of how long it has been since 10 seconds have passed
 static unsigned long ledtimer = 0;      // timer to keep track of the blinking of the LED post state change
@@ -87,7 +94,7 @@ bool ledState;
 bool flashStarted;
 const int blinkInterval = 300;
 
-enum SystemState {  //All the different states of the system
+enum Basic_States {  //All the different states of the system
   SCANNING,
   SENSING,
   TRANSITION,
@@ -108,6 +115,10 @@ enum FlashColour {  // The different colours that the system can take
   PURPLE,
   VARY_COLOR,
   WHITE
+};
+
+enum Advanced_States{
+  
 };
 
 #endif

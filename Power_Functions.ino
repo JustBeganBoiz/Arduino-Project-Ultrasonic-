@@ -12,9 +12,11 @@ bool CheckPowerOff() {
     flashStarted = false;
     isReset = true;
 
-    myservo.write(0);  // Servo homing sequence
-    angle = 0;
-    direction = 1;  
+    myservo1.write(0);  // Servo homing sequence
+    angle[0] = 0;
+    direction[0] = 1;  
+    angle[1] = 160;
+    direction[0] = -1;
 
     return true;  // System is OFF
   }
@@ -29,7 +31,8 @@ void ShutDown() {
   analogWrite(LED, 0);
   distance = 999;
   previousdistance = 999;
-  myservo.write(0);
+  myservo1.write(0);
+  myservo2.write(0);
   CurrentState = SCANNING;  // to reset the whole system
 }
 
@@ -65,6 +68,7 @@ void ProcessButton() {
     if (millis() - modeTimer >= modeInterval) { //mode shift after 4 seconds
       ModeSwitcher();
       modeShifted = true;
+      servoReset = true;
     }
   }
 }
