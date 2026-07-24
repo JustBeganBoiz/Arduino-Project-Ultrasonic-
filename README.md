@@ -188,8 +188,6 @@ Challenges Faced:
 - Two different glow's of the LED when the modes get switched. The two different glow's being PURPLE and a multi-color glow
 - Division of the program into several different files in order to implement proper segmentation and reduce clutter in the main program and improve developmental efficiency
 
-***NOTE: Photos and Videos of this version will be uploaded as soon as possible***
-
 ## Version 2.2
 
 Work in progress
